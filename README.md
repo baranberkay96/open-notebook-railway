@@ -1,5 +1,7 @@
 # Deploy and Host Open Notebook with Railway
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/open-notebook-v1-ai-research-assistant?referralCode=20H68q)
+
 Open Notebook is an open-source, privacy-focused alternative to Google NotebookLM. Collect PDFs, web pages, YouTube videos, audio and notes into notebooks, chat with them with citations, search across everything and turn your material into multi-speaker podcasts, using the AI providers you choose. This template runs Open Notebook with SurrealDB, password protection and persistent storage.
 
 ## About Hosting Open Notebook
