@@ -1,0 +1,183 @@
+{
+  "name": "Open Notebook v1 AI Research Assistant",
+  "description": "Private NotebookLM alternative: chat with your sources, generate podcasts.",
+  "category": "AI/ML",
+  "tags": [
+    "open-notebook",
+    "notebooklm",
+    "research",
+    "rag",
+    "podcast",
+    "surrealdb",
+    "llm",
+    "knowledge-base"
+  ],
+  "image": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/open-notebook.svg",
+  "upstream": {
+    "repo": "lfnovo/open-notebook",
+    "version": "1.15.0 (lfnovo/open_notebook:1.15.0, SurrealDB v2.7.0)",
+    "checked": "2026-10-11"
+  },
+  "services": {
+    "Open Notebook": {
+      "icon": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/open-notebook.svg",
+      "source": {
+        "image": "lfnovo/open_notebook:1.15.0"
+      },
+      "startCommand": null,
+      "preDeployCommand": null,
+      "healthcheckPath": "/api/config",
+      "healthcheckTimeout": 600,
+      "restartPolicyType": "ON_FAILURE",
+      "restartPolicyMaxRetries": 10,
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": true,
+      "targetPort": 8502,
+      "tcpProxy": null,
+      "volume": {
+        "mountPath": "/app/data"
+      },
+      "variables": {
+        "PORT": {
+          "defaultValue": "8502",
+          "description": "Port of the Next.js frontend, which also proxies /api/* to the internal API (5055). Railway routes the domain and the healthcheck here.",
+          "required": false
+        },
+        "API_URL": {
+          "defaultValue": "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+          "description": "Public URL the browser uses for API calls (same origin, proxied by the frontend). Update it if you add a custom domain.",
+          "required": false
+        },
+        "CORS_ORIGINS": {
+          "defaultValue": "https://${{RAILWAY_PUBLIC_DOMAIN}}",
+          "description": "Origins allowed to call the API cross-origin (upstream default is *). Add your custom domain here if you use one.",
+          "required": false
+        },
+        "OPEN_NOTEBOOK_PASSWORD": {
+          "defaultValue": "${{secret(24)}}",
+          "description": "Password for the web UI, also the REST API bearer token. Generated at deploy; empty disables authentication entirely.",
+          "required": false
+        },
+        "OPEN_NOTEBOOK_ENCRYPTION_KEY": {
+          "defaultValue": "${{secret(48, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\")}}",
+          "description": "Encrypts AI provider credentials stored in the database. Required; changing it makes saved credentials unreadable.",
+          "required": false
+        },
+        "SURREAL_URL": {
+          "defaultValue": "ws://${{SurrealDB.RAILWAY_PRIVATE_DOMAIN}}:${{SurrealDB.PORT}}/rpc",
+          "description": "SurrealDB WebSocket endpoint on the private network.",
+          "required": false
+        },
+        "SURREAL_USER": {
+          "defaultValue": "${{SurrealDB.SURREAL_USER}}",
+          "description": "SurrealDB root user (from the SurrealDB service).",
+          "required": false
+        },
+        "SURREAL_PASSWORD": {
+          "defaultValue": "${{SurrealDB.SURREAL_PASS}}",
+          "description": "SurrealDB root password (from the SurrealDB service).",
+          "required": false
+        },
+        "SURREAL_NAMESPACE": {
+          "defaultValue": "open_notebook",
+          "description": "SurrealDB namespace used by Open Notebook.",
+          "required": false
+        },
+        "SURREAL_DATABASE": {
+          "defaultValue": "open_notebook",
+          "description": "SurrealDB database used by Open Notebook.",
+          "required": false
+        },
+        "OPEN_NOTEBOOK_WORKER_MAX_TASKS": {
+          "defaultValue": "5",
+          "description": "Background tasks (source processing, embeddings, podcasts) the worker runs at once (upstream default 5). Use 1 for strict provider rate limits.",
+          "required": false
+        },
+        "OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB": {
+          "defaultValue": "100",
+          "description": "Largest upload the API accepts, in MB (upstream default 100).",
+          "required": false
+        },
+        "RAILWAY_DEPLOYMENT_DRAINING_SECONDS": {
+          "defaultValue": "30",
+          "description": "Grace period on redeploy so the worker can finish or release running tasks.",
+          "required": false
+        }
+      }
+    },
+    "SurrealDB": {
+      "icon": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/surrealdb.svg",
+      "source": {
+        "image": "surrealdb/surrealdb:v2.7.0"
+      },
+      "startCommand": "/surreal start",
+      "preDeployCommand": null,
+      "healthcheckPath": "/health",
+      "healthcheckTimeout": 300,
+      "restartPolicyType": "ON_FAILURE",
+      "restartPolicyMaxRetries": 10,
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": false,
+      "targetPort": null,
+      "tcpProxy": null,
+      "volume": {
+        "mountPath": "/data"
+      },
+      "variables": {
+        "PORT": {
+          "defaultValue": "8000",
+          "description": "Port SurrealDB listens on (HTTP + WebSocket RPC). Used by the healthcheck and by Open Notebook.",
+          "required": false
+        },
+        "SURREAL_USER": {
+          "defaultValue": "${{secret(16, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\")}}",
+          "description": "Root user created on first start. Generated at deploy.",
+          "required": false
+        },
+        "SURREAL_PASS": {
+          "defaultValue": "${{secret(32, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\")}}",
+          "description": "Root password created on first start. Generated at deploy.",
+          "required": false
+        },
+        "SURREAL_BIND": {
+          "defaultValue": "[::]:8000",
+          "description": "Listen address: all IPv6 and IPv4 interfaces on the private network (no public domain).",
+          "required": false
+        },
+        "SURREAL_PATH": {
+          "defaultValue": "rocksdb:/data/open-notebook.db",
+          "description": "Storage engine and data path on the /data volume (RocksDB, as in upstream's docker-compose).",
+          "required": false
+        },
+        "SURREAL_LOG": {
+          "defaultValue": "info",
+          "description": "SurrealDB log level.",
+          "required": false
+        },
+        "SURREAL_EXPERIMENTAL_GRAPHQL": {
+          "defaultValue": "true",
+          "description": "Same setting as upstream Open Notebook's docker-compose.",
+          "required": false
+        },
+        "SURREAL_NO_BANNER": {
+          "defaultValue": "true",
+          "description": "Skip the ASCII banner in the logs.",
+          "required": false
+        },
+        "RAILWAY_RUN_UID": {
+          "defaultValue": "0",
+          "description": "Run as root so SurrealDB can write the root-owned Railway volume (the image's default user is 65532).",
+          "required": false
+        },
+        "RAILWAY_DEPLOYMENT_DRAINING_SECONDS": {
+          "defaultValue": "30",
+          "description": "Lets SurrealDB flush RocksDB and shut down cleanly on redeploy.",
+          "required": false
+        }
+      }
+    }
+  },
+  "buckets": []
+}
